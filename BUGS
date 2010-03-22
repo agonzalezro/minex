@@ -1,2 +1,3 @@
+* We need to press enter after select a item on the combo -> We MUST remove it, but to do this I need to change Combo for a GtkEntryCompletion
 * The URL isn't loaded at start
 * Some FIXME in the code

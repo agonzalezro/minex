@@ -100,16 +100,16 @@ class Event:
         data = database.get_history()
         self.parent.moz.render_data(data, long(len(data)), 'file:///', 'text/html')
 
-    def on_url_activate(self, widget):
+    """def on_url_activate(self, widget):
         #FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
         if self.first_time:
             self.parent.moz.load_url(widget.get_active_text())
             self.first_time = None
+        self.parent.moz.load_url(widget.get_active_text())"""
+
+    def on_url_button_press_event(self, widget):
         self.parent.moz.load_url(widget.get_active_text())
-        
-    def on_url_insert_text(self, widget, new, length, position):
-        #This is to show the history
-        pass
+        self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
 
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
@@ -121,7 +121,7 @@ class Event:
             self.parent.moz.load_url(widget.get_active_text())
         else:
             if len(widget.get_active_text()) >= 3:
-               self.parent.set_model_from_list(self.parent['url'], self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+               self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
                 
             
     def on_search_activate(self, widget):
