@@ -19,7 +19,7 @@ class Layout:
         self.builder.add_from_file(file)
         self.window = self.builder.get_object(window)
         try:
-            self.window.set_size_request(int(config['width']), int(config['height']))
+            self.window.set_default_size(int(config['width']), int(config['height']))
         except:
             pass
         
@@ -36,7 +36,6 @@ class Layout:
         self['url'].set_active(0)
 
         self.moz.load_url(self['url'].get_active_text())
-        dir(self.moz)
         self.window.show()
 
         e = Event(self)
@@ -62,10 +61,13 @@ class Layout:
 
 
 class Event:
+    combo_length = 0
+    first_time = True
+
     def __init__(self, parent):
         self.parent = parent
         self.database = DataBase()
-        self.first_time = True
+        self.config = Config()
         
     def on_location_changed(self, widget):
         pass
@@ -88,8 +90,7 @@ class Event:
         self.parent.moz.go_forward()
     
     def on_home_clicked(self, widget):
-        config = Config()
-        self.parent.moz.load_url(config['home'])
+        self.parent.moz.load_url(self.config['home'])
         #FIXME: This event doesn't change the url page showed in the combo
     
     def on_refresh_clicked(self, widget):
@@ -107,9 +108,12 @@ class Event:
             self.first_time = None
         self.parent.moz.load_url(widget.get_active_text())"""
 
-    def on_url_button_press_event(self, widget):
-        self.parent.moz.load_url(widget.get_active_text())
-        self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+    def on_url_changed(self, widget):
+        # FIXME: We've made a click (or paste) because I can't write (or erase) two letter at same time
+        if abs(len(widget.get_active_text()) - self.combo_length) >= 2:
+            self.parent.moz.load_url(widget.get_active_text())
+            self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+        self.combo_length = len(widget.get_active_text())
 
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
@@ -125,10 +129,11 @@ class Event:
                 
             
     def on_search_activate(self, widget):
-        config = Config()
-        self.parent.moz.load_url(config['search_uri'] + widget.get_text())   
+        self.parent.moz.load_url(self.config['search_uri'] + widget.get_text())   
 
     def on_main_destroy(self, widget):
+        (_, _, self.config['width'], _) = self.parent['main'].get_allocation()
+        (_, _, _, self.config['height']) = self.parent['main'].get_allocation()
         gtk.main_quit()
 
 
@@ -224,19 +229,52 @@ class Config:
             if not os.path.exists(self.dir_path): os.mkdir(self.dir_path)
             self.create_config()
             
-        self.config = ConfigParser.ConfigParser()
-        self.config.readfp(file(self.file_path))
-            
+        self.config = self.initialize()
+
+    def initialize(self):
+        config = ConfigParser.ConfigParser()
+        config.readfp(file(self.file_path))
+        return config
+
     def create_config(self):
         try:
-            f = open(self.file_path, "w");
-            f.write("[general]\nhome = about:blank\nsearch_uri = http://www.google.es/#q=")
-            f.close()
+            tosave = ConfigParser.RawConfigParser()
+            tosave.add_section('general')
+            tosave.set('general', 'home', 'about:blank')
+            tosave.set('general', 'search_uri', 'http://www.google.es/#q=')
+            tosave.set('general', 'width', 0)
+            tosave.set('general', 'height', 0)
+
+            with open(self.file_path, 'wb') as configfile:
+                tosave.write(configfile)
         except:
-            print 'Error writing config in ' + file_path + ', try rm -rf ' + file_path
+            print 'Error writing config in ' + self.file_path + ', try rm -rf ' + self.file_path
         
     def __getitem__(self, key):
-        return self.config.get('general', key)
+        try:
+            return self.config.get('general', key)
+        except:
+            # It doesn't exist
+            return None
+
+    def __setitem__(self, key, value):
+        self.config = self.initialize()
+        #FIXME: read all elements from the config file
+        elements = ('home', 'search_uri', 'width', 'height')
+        try:
+            tosave = ConfigParser.RawConfigParser()
+            tosave.add_section('general')
+
+            for element in elements:
+                if element != key:
+                    if self[key]: tosave.set('general', element, self[element])
+                else:
+                    tosave.set('general', key, value)
+
+            with open(self.file_path, 'wb') as configfile:
+                tosave.write(configfile)
+        except:
+            print 'Error saving element ' + key + ' in config file ' + self.file_path + ', try rm -rf ' + self.file_path
     
 
 if __name__ == '__main__':

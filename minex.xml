@@ -3,15 +3,13 @@
   <!-- interface-requires gtk+ 2.16 -->
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="main">
-    <property name="width_request">640</property>
-    <property name="height_request">480</property>
+    <property name="width_request">0</property>
+    <property name="height_request">100</property>
     <property name="title" translatable="yes">minino explorer</property>
     <property name="icon">minex.png</property>
     <signal handler="on_main_destroy" name="destroy"/>
     <child>
       <object class="GtkVBox" id="vbox1">
-        <property name="width_request">640</property>
-        <property name="height_request">480</property>
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
         <child>
@@ -22,7 +20,6 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_default">True</property>
-                <property name="label" translatable="yes">Back</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-go-back</property>
                 <signal handler="on_back_clicked" name="clicked"/>
@@ -36,7 +33,6 @@
               <object class="GtkToolButton" id="forward">
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
-                <property name="label" translatable="yes">Forward</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-go-forward</property>
                 <signal handler="on_forward_clicked" name="clicked"/>
@@ -49,7 +45,6 @@
             <child>
               <object class="GtkToolButton" id="Home">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Home</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-home</property>
                 <signal handler="on_home_clicked" name="clicked"/>
@@ -62,7 +57,6 @@
             <child>
               <object class="GtkToolButton" id="refresh">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Refresh</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-refresh</property>
                 <signal handler="on_refresh_clicked" name="clicked"/>
@@ -91,6 +85,7 @@
                 <child>
                   <object class="GtkComboBoxEntry" id="url">
                     <property name="visible">True</property>
+                    <signal handler="on_url_changed" name="changed"/>
                     <signal handler="on_url_key_release_event" name="key_release_event"/>
                   </object>
                 </child>
