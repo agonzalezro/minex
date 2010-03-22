@@ -12,6 +12,7 @@ import ConfigParser
 class Layout:
     def __init__(self, file, window, home = None):
         config = Config()
+        database = DataBase()
         self.moz = gtkmozembed.MozEmbed()
         
         self.builder = gtk.Builder()
@@ -31,9 +32,11 @@ class Layout:
             except:
                 home = 'about:blank'
 
-        self['url'].set_text(home)
-        self.moz.load_url(home)
-        self['url'].select_region(0, -1)
+        self.set_model_from_list(self['url'], database.get_only_five(home))
+        self['url'].set_active(0)
+
+        self.moz.load_url(self['url'].get_active_text())
+        dir(self.moz)
         self.window.show()
 
         e = Event(self)
@@ -41,9 +44,21 @@ class Layout:
         self.moz.connect('location', e.on_location_changed)
         self.moz.connect('title', e.on_title_changed)
         
-
     def __getitem__(self, key):
         return self.builder.get_object(key)
+
+    def set_model_from_list (self, cb, items):
+        """Setup a ComboBox or ComboBoxEntry based on a list of strings."""           
+        model = gtk.ListStore(str)
+        for i in items:
+            model.append([i])
+        cb.set_model(model)
+        if type(cb) == gtk.ComboBoxEntry:
+            cb.set_text_column(0)
+        elif type(cb) == gtk.ComboBox:
+            cell = gtk.CellRendererText()
+            cb.pack_start(cell, True)
+            cb.add_attribute(cell, 'text', 0)
 
 
 class Event:
@@ -61,10 +76,10 @@ class Event:
         self.parent['back'].set_sensitive(self.parent.moz.can_go_back())
         self.parent['forward'].set_sensitive(self.parent.moz.can_go_forward())
         if self.parent.moz.get_link_message():
-            self.parent['url'].set_text(self.parent.moz.get_link_message())
+            #self.parent['url'].set_text(self.parent.moz.get_link_message())
             self.database.save_as_history_entry(self.parent.moz.get_link_message())
         else:
-            self.database.save_as_history_entry(self.parent['url'].get_text())        
+            self.database.save_as_history_entry(self.parent['url'].get_active_text())        
 
     def on_back_clicked(self, widget):
         self.parent.moz.go_back()
@@ -75,7 +90,7 @@ class Event:
     def on_home_clicked(self, widget):
         config = Config()
         self.parent.moz.load_url(config['home'])
-        #FIXME: This event doesn't change the home page
+        #FIXME: This event doesn't change the url page showed in the combo
     
     def on_refresh_clicked(self, widget):
         self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
@@ -88,20 +103,32 @@ class Event:
     def on_url_activate(self, widget):
         #FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
         if self.first_time:
-            self.parent.moz.load_url(self.parent['url'].get_text())
+            self.parent.moz.load_url(widget.get_active_text())
             self.first_time = None
-        self.parent.moz.load_url(self.parent['url'].get_text())
+        self.parent.moz.load_url(widget.get_active_text())
         
     def on_url_insert_text(self, widget, new, length, position):
         #This is to show the history
         pass
-        
+
+    def on_url_key_release_event(self, widget, key):
+        # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
+        if key.keyval == 65293:
+            #FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
+            if self.first_time:
+                self.parent.moz.load_url(widget.get_active_text())
+                self.first_time = None
+            self.parent.moz.load_url(widget.get_active_text())
+        else:
+            if len(widget.get_active_text()) >= 3:
+               self.parent.set_model_from_list(self.parent['url'], self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+                
+            
     def on_search_activate(self, widget):
         config = Config()
-        self.parent.moz.load_url(config['search_uri'] + self.parent['search'].get_text())   
+        self.parent.moz.load_url(config['search_uri'] + widget.get_text())   
 
     def on_main_destroy(self, widget):
-        Config()
         gtk.main_quit()
 
 
@@ -155,6 +182,18 @@ class DataBase:
             
         data = data + '</body></html>'
         return data
+
+    def get_only_five(self, actual, key = None):
+        items = list()
+        items.append(actual)
+
+        if key: sql = 'SELECT * FROM history WHERE url LIKE \'%' + key + '%\' ORDER by time LIMIT 5;'
+        else: sql = 'SELECT url FROM history ORDER by time LIMIT 5;'
+
+        for row in self.cursor.execute(sql):
+            items.append(row[0])
+
+        return items
     
     def sanitize(self, url):
         url = url.lower()

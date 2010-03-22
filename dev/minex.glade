@@ -89,12 +89,9 @@
               <widget class="GtkToolItem" id="url_container">
                 <property name="visible">True</property>
                 <child>
-                  <widget class="GtkEntry" id="url">
+                  <widget class="GtkComboBoxEntry" id="url">
                     <property name="visible">True</property>
-                    <property name="has_focus">True</property>
-                    <property name="invisible_char">&#x25CF;</property>
-                    <signal name="activate" handler="on_url_activate"/>
-                    <signal name="insert_text" handler="on_url_insert_text"/>
+                    <signal name="key_release_event" handler="on_url_key_release_event"/>
                   </widget>
                 </child>
               </widget>
