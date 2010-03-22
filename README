@@ -1,0 +1,17 @@
+INTRODUCTION
+------------
+A web explorer with a few features to use in the minino distribution.
+
+
+REQUERIMENTS
+------------
+python.gtkmozembed python-pysqlite2
+
+
+TODO
+----
+* Add tabs
+* Add config window
+* Add bookmarks
+* i18n
+* Save resize states
