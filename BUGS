@@ -1,2 +1,3 @@
 * The URL isn't loaded at start
-* Some FIXME in the code
+* Some FIXME in the code: grep FIXME minex.py | sed "s/  //g"
+* Documentation :)

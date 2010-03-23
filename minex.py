@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 import gtk
 import sys
 import gtkmozembed
 import os
 from pysqlite2 import dbapi2 as sqlite
 import ConfigParser
-
 
 class Layout:
     def __init__(self, file, window, home = None):
@@ -18,10 +18,14 @@ class Layout:
         self.builder = gtk.Builder()
         self.builder.add_from_file(file)
         self.window = self.builder.get_object(window)
-        try:
-            self.window.set_default_size(int(config['width']), int(config['height']))
-        except:
-            pass
+
+        if config['width'] != "-1": width = int(config['width'])
+        else: width = 640
+
+        if config['width'] != "-1": height = int(config['height'])
+        else: height = 480
+
+        self.window.set_default_size(width, height)
         
         self['vbox1'].pack_start(self.moz)
         self.moz.show()
@@ -78,7 +82,7 @@ class Event:
         self.parent['back'].set_sensitive(self.parent.moz.can_go_back())
         self.parent['forward'].set_sensitive(self.parent.moz.can_go_forward())
         if self.parent.moz.get_link_message():
-            #self.parent['url'].set_text(self.parent.moz.get_link_message())
+            # self.parent['url'].set_text(self.parent.moz.get_link_message())
             self.database.save_as_history_entry(self.parent.moz.get_link_message())
         else:
             self.database.save_as_history_entry(self.parent['url'].get_active_text())        
@@ -91,7 +95,7 @@ class Event:
     
     def on_home_clicked(self, widget):
         self.parent.moz.load_url(self.config['home'])
-        #FIXME: This event doesn't change the url page showed in the combo
+        # FIXME: This event doesn't change the url page showed in the combo
     
     def on_refresh_clicked(self, widget):
         self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
@@ -100,13 +104,6 @@ class Event:
         database = DataBase()
         data = database.get_history()
         self.parent.moz.render_data(data, long(len(data)), 'file:///', 'text/html')
-
-    """def on_url_activate(self, widget):
-        #FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
-        if self.first_time:
-            self.parent.moz.load_url(widget.get_active_text())
-            self.first_time = None
-        self.parent.moz.load_url(widget.get_active_text())"""
 
     def on_url_changed(self, widget):
         # FIXME: We've made a click (or paste) because I can't write (or erase) two letter at same time
@@ -118,7 +115,7 @@ class Event:
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
         if key.keyval == 65293:
-            #FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
+            # FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
             if self.first_time:
                 self.parent.moz.load_url(widget.get_active_text())
                 self.first_time = None
@@ -209,7 +206,7 @@ class DataBase:
         if url.startswith('http://'):
             url = url.split('http://')[1]
         
-        #If starts with http, could starts with www. too, so we need to test it here without elif statement
+        # If starts with http, could starts with www. too, so we need to test it here without elif statement
         if url.startswith('www.'):
             url = url.split('www.')[1]
         elif url.startswith('about:'):
@@ -242,8 +239,8 @@ class Config:
             tosave.add_section('general')
             tosave.set('general', 'home', 'about:blank')
             tosave.set('general', 'search_uri', 'http://www.google.es/#q=')
-            tosave.set('general', 'width', 0)
-            tosave.set('general', 'height', 0)
+            tosave.set('general', 'width', -1)
+            tosave.set('general', 'height', -1)
 
             with open(self.file_path, 'wb') as configfile:
                 tosave.write(configfile)
@@ -259,7 +256,7 @@ class Config:
 
     def __setitem__(self, key, value):
         self.config = self.initialize()
-        #FIXME: read all elements from the config file
+        # FIXME: read all elements from the config file
         elements = ('home', 'search_uri', 'width', 'height')
         try:
             tosave = ConfigParser.RawConfigParser()
