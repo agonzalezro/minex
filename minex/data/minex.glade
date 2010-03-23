@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<glade-interface>
+  <!-- interface-requires gtk+ 2.16 -->
+  <!-- interface-naming-policy project-wide -->
+  <widget class="GtkWindow" id="main">
+    <property name="title" translatable="yes">minino explorer</property>
+    <property name="icon">minex.png</property>
+    <signal name="destroy" handler="on_main_destroy"/>
+    <child>
+      <widget class="GtkVBox" id="vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <widget class="GtkToolbar" id="toolbar1">
+            <property name="visible">True</property>
+            <child>
+              <widget class="GtkToolButton" id="back">
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_default">True</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-go-back</property>
+                <signal name="clicked" handler="on_back_clicked"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolButton" id="forward">
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-go-forward</property>
+                <signal name="clicked" handler="on_forward_clicked"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolButton" id="Home">
+                <property name="visible">True</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-home</property>
+                <signal name="clicked" handler="on_home_clicked"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolButton" id="refresh">
+                <property name="visible">True</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-refresh</property>
+                <signal name="clicked" handler="on_refresh_clicked"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolButton" id="History">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">History</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-sort-descending</property>
+                <signal name="clicked" handler="on_history_clicked"/>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolItem" id="url_container">
+                <property name="visible">True</property>
+                <child>
+                  <widget class="GtkComboBoxEntry" id="url">
+                    <property name="visible">True</property>
+                    <signal name="changed" handler="on_url_changed"/>
+                    <signal name="key_release_event" handler="on_url_key_release_event"/>
+                  </widget>
+                </child>
+              </widget>
+              <packing>
+                <property name="expand">True</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkToolItem" id="search_container">
+                <property name="visible">True</property>
+                <child>
+                  <widget class="GtkEntry" id="search">
+                    <property name="visible">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="text" translatable="yes">Search in web...</property>
+                    <signal name="activate" handler="on_search_activate"/>
+                  </widget>
+                </child>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+          </widget>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+</glade-interface>
