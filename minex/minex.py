@@ -36,6 +36,7 @@ class Layout:
         self.builder.connect_signals(e)
         self.moz.connect('location', e.on_location_changed)
         self.moz.connect('title', e.on_title_changed)
+        self.moz.connect('progress', e.on_progress_changed)
 
     def initialize_mozilla(self, mozilla, config, home = None):
         if not home:
@@ -56,10 +57,14 @@ class Layout:
 
         window.set_default_size(width, height)
 
-    def fill_combo(self, combo, expresion):
+    def fill_combo(self, combo, actual, needed_search = False):
         database = DataBase()
-        self.set_model_from_list(combo, database.get_only_five(expresion))
-        combo.set_active(0)
+        if not needed_search:
+            self.set_model_from_list(combo, database.get_only_five(actual))
+            combo.set_active(0)
+        else:
+            # The string actual is the key to the search too
+            self.set_model_from_list(combo, database.get_only_five(actual, actual))
         
     def __getitem__(self, key):
         return self.builder.get_object(key)
@@ -81,6 +86,7 @@ class Layout:
 class Event:
     combo_length = 0
     first_time = True
+    loaded = False
 
     def __init__(self, parent):
         self.parent = parent
@@ -91,15 +97,23 @@ class Event:
         pass
         
     def on_title_changed(self, widget):
-        if self.parent.moz.get_title():
-            self.parent['main'].set_title(self.parent.moz.get_title() + ' - minino explorer')
-        self.parent['back'].set_sensitive(self.parent.moz.can_go_back())
-        self.parent['forward'].set_sensitive(self.parent.moz.can_go_forward())
-        if self.parent.moz.get_link_message():
+        if widget.get_title():
+            self.parent['main'].set_title(widget.get_title() + ' - minino explorer')
+        self.parent['back'].set_sensitive(widget.can_go_back())
+        self.parent['forward'].set_sensitive(widget.can_go_forward())
+        if widget.get_link_message():
             # self.parent['url'].set_text(self.parent.moz.get_link_message())
-            self.database.save_as_history_entry(self.parent.moz.get_link_message())
+            self.parent.fill_combo(self.parent['url'], widget.get_link_message(), True)
+            self.parent['url'].set_active(0)
+            self.database.save_as_history_entry(widget.get_link_message())
         else:
-            self.database.save_as_history_entry(self.parent['url'].get_active_text())        
+            self.database.save_as_history_entry(self.parent['url'].get_active_text())
+
+    def on_progress_changed(self, widget, current, length):
+        # Unused for now
+        if current == length: self.loaded = True
+        else: self.loaded = False
+        
 
     def on_back_clicked(self, widget):
         self.parent.moz.go_back()
@@ -108,7 +122,10 @@ class Event:
         self.parent.moz.go_forward()
     
     def on_home_clicked(self, widget):
+        self.loaded = False
         self.parent.moz.load_url(self.config['home'])
+        self.parent.fill_combo(self.parent['url'], self.config['home'], False)
+        self.parent['url'].set_active(0)
         # FIXME: This event doesn't change the url page showed in the combo
     
     def on_refresh_clicked(self, widget):
@@ -123,8 +140,8 @@ class Event:
         # FIXME: We've made a click (or paste) because I can't write (or erase) two letter at same time
         if abs(len(widget.get_active_text()) - self.combo_length) >= 2:
             self.parent.moz.load_url(widget.get_active_text())
-            self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
-            # ERROR: self.parent.fill_combo(widget, widget.get_active_text())
+            #self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+            self.parent.fill_combo(widget, widget.get_active_text(), True)
         self.combo_length = len(widget.get_active_text())
 
     def on_url_key_release_event(self, widget, key):
@@ -138,7 +155,7 @@ class Event:
         else:
             if len(widget.get_active_text()) >= 3:
                self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
-               # ERROR: self.parent.fill_combo(widget, widget.get_active_text())
+               self.parent.fill_combo(widget, widget.get_active_text(), True)
                 
             
     def on_search_activate(self, widget):
