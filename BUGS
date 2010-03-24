@@ -1,3 +1,3 @@
-* The URL isn't loaded at start
+* When I'm in the history page & click on a entry, it doesn't change my url entry
 * Some FIXME in the code: grep FIXME minex.py | sed "s/  //g"
 * Documentation :)

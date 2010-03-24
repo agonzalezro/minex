@@ -1,6 +1,7 @@
 all:
+	mkdir -p bin/
 	gtk-builder-convert minex/data/minex.glade bin/minex.xml
-	mkdir /tmp/minex/
+	mkdir -p /tmp/minex/
 	cp minex/minex.py /tmp/minex/
 	sed -i "s/'..\/bin\/minex.xml'/'minex.xml'/g" /tmp/minex/minex.py
 	python -mcompileall /tmp/minex/

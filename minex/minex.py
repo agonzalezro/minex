@@ -8,46 +8,58 @@ import gtkmozembed
 import os
 from pysqlite2 import dbapi2 as sqlite
 import ConfigParser
+import time
+import gobject
 
 XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.xml')
 
 class Layout:
     def __init__(self, file, window, home = None):
         config = Config()
-        database = DataBase()
         self.moz = gtkmozembed.MozEmbed()
-        
+
         self.builder = gtk.Builder()
         self.builder.add_from_file(file)
-        self.window = self.builder.get_object(window)
-
-        if config['width'] != "-1": width = int(config['width'])
-        else: width = 640
-
-        if config['width'] != "-1": height = int(config['height'])
-        else: height = 480
-
-        self.window.set_default_size(width, height)
-        
+        window = self.builder.get_object(window)
+ 
+        home = self.initialize_mozilla(self.moz, config, home)
         self['vbox1'].pack_start(self.moz)
+
+        self.resize_window(window, config)
         self.moz.show()
-        
+        window.show()
+
+        # I must do this here, because if I initialize database after load_url, it doesn't work
+        self.fill_combo(self['url'], home)
+
+        e = Event(self)
+        self.builder.connect_signals(e)
+        self.moz.connect('location', e.on_location_changed)
+        self.moz.connect('title', e.on_title_changed)
+
+    def initialize_mozilla(self, mozilla, config, home = None):
         if not home:
             try:
                 home = config['home']
             except:
                 home = 'about:blank'
 
-        self.set_model_from_list(self['url'], database.get_only_five(home))
-        self['url'].set_active(0)
+        mozilla.load_url(home)
+        return home
 
-        self.moz.load_url(self['url'].get_active_text())
-        self.window.show()
+    def resize_window(self, window, config):
+        if config['width'] != None and config['width'] != "-1": width = int(config['width'])
+        else: width = 640
 
-        e = Event(self)
-        self.builder.connect_signals(e)
-        self.moz.connect('location', e.on_location_changed)
-        self.moz.connect('title', e.on_title_changed)
+        if config['height'] != None and config['height'] != "-1": height = int(config['height'])
+        else: height = 480
+
+        window.set_default_size(width, height)
+
+    def fill_combo(self, combo, expresion):
+        database = DataBase()
+        self.set_model_from_list(combo, database.get_only_five(expresion))
+        combo.set_active(0)
         
     def __getitem__(self, key):
         return self.builder.get_object(key)
@@ -112,6 +124,7 @@ class Event:
         if abs(len(widget.get_active_text()) - self.combo_length) >= 2:
             self.parent.moz.load_url(widget.get_active_text())
             self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+            # ERROR: self.parent.fill_combo(widget, widget.get_active_text())
         self.combo_length = len(widget.get_active_text())
 
     def on_url_key_release_event(self, widget, key):
@@ -125,6 +138,7 @@ class Event:
         else:
             if len(widget.get_active_text()) >= 3:
                self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
+               # ERROR: self.parent.fill_combo(widget, widget.get_active_text())
                 
             
     def on_search_activate(self, widget):

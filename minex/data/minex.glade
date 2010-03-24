@@ -67,9 +67,8 @@
             <child>
               <widget class="GtkToolButton" id="History">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">History</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-sort-descending</property>
+                <property name="stock_id">gtk-index</property>
                 <signal name="clicked" handler="on_history_clicked"/>
               </widget>
               <packing>
