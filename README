@@ -15,6 +15,7 @@ python-gtkmozembed python-pysqlite2
 
 TODO
 ----
+* When I tab in the combo, go to the search
 * Add tabs
 * Add config window
 * Add bookmarks

@@ -126,7 +126,6 @@ class Event:
         self.parent.moz.load_url(self.config['home'])
         self.parent.fill_combo(self.parent['url'], self.config['home'], False)
         self.parent['url'].set_active(0)
-        # FIXME: This event doesn't change the url page showed in the combo
     
     def on_refresh_clicked(self, widget):
         self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
@@ -137,7 +136,7 @@ class Event:
         self.parent.moz.render_data(data, long(len(data)), 'file:///', 'text/html')
 
     def on_url_changed(self, widget):
-        # FIXME: We've made a click (or paste) because I can't write (or erase) two letter at same time
+        # We've made a click (or paste) because I can't write (or erase) two letter at same time
         if abs(len(widget.get_active_text()) - self.combo_length) >= 2:
             self.parent.moz.load_url(widget.get_active_text())
             #self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
@@ -147,7 +146,7 @@ class Event:
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
         if key.keyval == 65293:
-            # FIXME: This is a fucking bug, if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
+            # This is a fucking "bug", if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
             if self.first_time:
                 self.parent.moz.load_url(widget.get_active_text())
                 self.first_time = None
@@ -289,8 +288,15 @@ class Config:
 
     def __setitem__(self, key, value):
         self.config = self.initialize()
-        # FIXME: read all elements from the config file
-        elements = ('home', 'search_uri', 'width', 'height')
+     
+        # I'm creating new list, instead use elements_from_file to reuse some code
+        elements = list()
+        elements_from_file = self.config.items("general")
+        i = 0
+        while i < len(elements_from_file):
+            elements.append(elements_from_file[i][0])
+            i=i+1
+
         try:
             tosave = ConfigParser.RawConfigParser()
             tosave.add_section('general')
