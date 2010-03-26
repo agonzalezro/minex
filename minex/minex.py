@@ -103,6 +103,8 @@ class Layout:
         # Create files for all favicon's in /tmp... for cache and for concurrence between the future tabs or several minex opened
         path = os.path.join(TMPDIR, url[0:-1].replace('http://', '').replace('.', '_') + '.ico')
 
+        if os.path.exists(path): return path
+
         request = urllib2.Request(url + 'favicon.ico', headers=HEADERS)
         try:
             icon = urllib2.urlopen(request).read()
@@ -156,8 +158,12 @@ class Event:
             self.database.save_as_history_entry(self.parent['url'].get_active_text())
 
         icon_path = self.parent.get_favicon(self.parent['url'].get_active_text())
-        icon = gtk.gdk.pixbuf_new_from_file(icon_path)
-        self.parent['main'].set_icon(icon)
+        try:
+            icon = gtk.gdk.pixbuf_new_from_file(icon_path)
+            self.parent['main'].set_icon(icon)
+        except:
+            # This could fail if the icon isn't retrieved at time
+            pass
 
     def on_progress_changed(self, widget, current, length):
         # Unused for now
