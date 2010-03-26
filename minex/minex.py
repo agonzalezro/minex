@@ -8,20 +8,26 @@ import gtkmozembed
 import os
 from pysqlite2 import dbapi2 as sqlite
 import ConfigParser
-import time
-import gobject
+import re
+# To get_favicon
+import shutil
+import urllib2
+import lxml.html
 
 XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.xml')
+ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.png')
+TMPDIR = '/tmp/minex'
 
 class Layout:
     def __init__(self, file, window, home = None):
         config = Config()
         self.moz = gtkmozembed.MozEmbed()
+        if not os.path.exists(TMPDIR): os.mkdir(TMPDIR)
 
         self.builder = gtk.Builder()
         self.builder.add_from_file(file)
         window = self.builder.get_object(window)
- 
+
         home = self.initialize_mozilla(self.moz, config, home)
         self['vbox1'].pack_start(self.moz)
 
@@ -37,7 +43,7 @@ class Layout:
         self.moz.connect('location', e.on_location_changed)
         self.moz.connect('title', e.on_title_changed)
         self.moz.connect('progress', e.on_progress_changed)
-
+        
     def initialize_mozilla(self, mozilla, config, home = None):
         if not home:
             try:
@@ -65,12 +71,12 @@ class Layout:
         else:
             # The string actual is the key to the search too
             self.set_model_from_list(combo, database.get_only_five(actual, actual))
-        
+
     def __getitem__(self, key):
         return self.builder.get_object(key)
 
     def set_model_from_list (self, cb, items):
-        """Setup a ComboBox or ComboBoxEntry based on a list of strings."""           
+        """Setup a ComboBox or ComboBoxEntry based on a list of strings."""
         model = gtk.ListStore(str)
         for i in items:
             model.append([i])
@@ -82,6 +88,46 @@ class Layout:
             cb.pack_start(cell, True)
             cb.add_attribute(cell, 'text', 0)
 
+    def get_favicon(self, url, path='/tmp/favicon.ico', alt_icon_path=ICONPATH):
+        """ Some code of this function from: http://code.activestate.com/recipes/577114-downloading-websites-favicon/ """
+        if url.startswith("about:"): return alt_icon_path
+
+        HEADERS = {
+            'User-Agent': 'urllib2 (Python %s)' % sys.version.split()[0],
+            'Connection': 'close',
+        }
+
+        url = re.search('(http://)?.*(\.[a-z][a-z][a-z]?)', url).group(0) + '/'
+        if not url.startswith('http://'): url = 'http://' + url
+
+        # Create files for all favicon's in /tmp... for cache and for concurrence between the future tabs or several minex opened
+        path = os.path.join(TMPDIR, url[0:-1].replace('http://', '').replace('.', '_') + '.ico')
+
+        request = urllib2.Request(url + 'favicon.ico', headers=HEADERS)
+        try:
+            icon = urllib2.urlopen(request).read()
+        except(urllib2.HTTPError, urllib2.URLError):
+            reqest = urllib2.Request(url, headers=HEADERS)
+            try:
+                content = urllib2.urlopen(request).read(2048) # 2048 bytes should be enought for most of websites
+            except(urllib2.HTTPError, urllib2.URLError):
+                shutil.copyfile(alt_icon_path, path)
+                return
+            icon_path = lxml.html.fromstring(x).xpath(
+                '//link[@rel="icon" or @rel="shortcut icon"]/@href'
+            )
+            if icon_path:
+                request = urllib2.Request(url + icon_path[:1], headers=HEADERS)
+                try:
+                    icon = urllib2.urlopen(request).read()
+                except(urllib2.HTTPError, urllib2.URLError):
+                    shutil.copyfile(alt_icon_path, path)
+                    return
+
+        open(path, 'wb').write(icon)
+
+        return path
+
 
 class Event:
     combo_length = 0
@@ -92,10 +138,10 @@ class Event:
         self.parent = parent
         self.database = DataBase()
         self.config = Config()
-        
+
     def on_location_changed(self, widget):
         pass
-        
+
     def on_title_changed(self, widget):
         if widget.get_title():
             self.parent['main'].set_title(widget.get_title() + ' - minino explorer')
@@ -109,27 +155,31 @@ class Event:
         else:
             self.database.save_as_history_entry(self.parent['url'].get_active_text())
 
+        icon_path = self.parent.get_favicon(self.parent['url'].get_active_text())
+        icon = gtk.gdk.pixbuf_new_from_file(icon_path)
+        self.parent['main'].set_icon(icon)
+
     def on_progress_changed(self, widget, current, length):
         # Unused for now
         if current == length: self.loaded = True
         else: self.loaded = False
-        
+
 
     def on_back_clicked(self, widget):
         self.parent.moz.go_back()
 
     def on_forward_clicked(self, widget):
         self.parent.moz.go_forward()
-    
+
     def on_home_clicked(self, widget):
         self.loaded = False
         self.parent.moz.load_url(self.config['home'])
         self.parent.fill_combo(self.parent['url'], self.config['home'], False)
         self.parent['url'].set_active(0)
-    
+
     def on_refresh_clicked(self, widget):
         self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
-        
+
     def on_history_clicked(self, widget):
         database = DataBase()
         data = database.get_history()
@@ -155,14 +205,18 @@ class Event:
             if len(widget.get_active_text()) >= 3:
                self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
                self.parent.fill_combo(widget, widget.get_active_text(), True)
-                
-            
+
+
     def on_search_activate(self, widget):
-        self.parent.moz.load_url(self.config['search_uri'] + widget.get_text())   
+        self.parent.moz.load_url(self.config['search_uri'] + widget.get_text())
 
     def on_main_destroy(self, widget):
         (_, _, self.config['width'], _) = self.parent['main'].get_allocation()
         (_, _, _, self.config['height']) = self.parent['main'].get_allocation()
+        # Remove temp files
+        for file in os.listdir(TMPDIR):
+            os.remove(os.path.join(TMPDIR, file))
+        os.rmdir(TMPDIR)
         gtk.main_quit()
 
 
@@ -171,7 +225,7 @@ class DataBase:
     file_path = dir_path + 'minex.db'
     connection = None;
     cursor = None;
-    
+
     def __init__(self):
         if not os.path.exists(self.file_path):
             if not os.path.exists(self.dir_path): os.mkdir(self.dir_path)
@@ -179,12 +233,12 @@ class DataBase:
         else:
             self.connection = sqlite.connect(self.file_path)
             self.cursor = self.connection.cursor()
-            
+
     def create_database(self):
         self.connection = sqlite.connect(self.file_path)
         self.cursor = self.connection.cursor()
-        
-        try:       
+
+        try:
             self.cursor.execute('CREATE TABLE history (url VARCHAR(1024) PRIMARY KEY, time DATETIME);')
             self.connection.commit()
         except:
@@ -192,28 +246,28 @@ class DataBase:
 
         try:
             self.cursor.execute('CREATE TABLE bookmarks (url VARCHAR(1024));')
-            self.connection.commit()           
+            self.connection.commit()
         except:
             print 'Error writing table bookmarks in ' + file_path + ', try rm -rf ' + file_path
-            
+
     def save_as_history_entry(self, url):
         if (self.sanitize(url)):
             sql = 'REPLACE INTO history (url, time) VALUES (?, DATETIME("NOW"));'
             self.cursor.execute(sql, (self.sanitize(url), ))
-            self.connection.commit() 
-        
+            self.connection.commit()
+
     def save_as_bookmark_entry(self, url):
         if (self.sanitize(url)):
             sql = 'REPLACE INTO bookmarks (url) VALUES (?);'
             self.cursor.execute(sql, (self.sanitize(url), ))
             self.connection.commit()
-    
+
     def get_history(self):
         data = '<html><head><title>History</title></head><body><h1>History</h1><ul>'
-        
+
         for row in self.cursor.execute('SELECT * FROM history;'):
             data = data + '<li><a href="http://%s">%s</a> (%s)</li>' % (row[0], row[0], row[1])
-            
+
         data = data + '</body></html>'
         return data
 
@@ -228,36 +282,36 @@ class DataBase:
             items.append(row[0])
 
         return items
-    
+
     def sanitize(self, url):
         url = url.lower()
-        
+
         if url.endswith("/"):
             url = url[0:-1]
-        
+
         if url.startswith('http://'):
             url = url.split('http://')[1]
-        
+
         # If starts with http, could starts with www. too, so we need to test it here without elif statement
         if url.startswith('www.'):
             url = url.split('www.')[1]
         elif url.startswith('about:'):
             url = False
-            
+
         return url
-            
-    
+
+
 
 class Config:
     dir_path = os.environ['HOME'] + '/.minex/'
     file_path = dir_path + 'config'
     config = None
-    
+
     def __init__(self):
         if not os.path.exists(self.file_path):
             if not os.path.exists(self.dir_path): os.mkdir(self.dir_path)
             self.create_config()
-            
+
         self.config = self.initialize()
 
     def initialize(self):
@@ -278,7 +332,7 @@ class Config:
                 tosave.write(configfile)
         except:
             print 'Error writing config in ' + self.file_path + ', try rm -rf ' + self.file_path
-        
+
     def __getitem__(self, key):
         try:
             return self.config.get('general', key)
@@ -288,7 +342,7 @@ class Config:
 
     def __setitem__(self, key, value):
         self.config = self.initialize()
-     
+
         # I'm creating new list, instead use elements_from_file to reuse some code
         elements = list()
         elements_from_file = self.config.items("general")
@@ -311,11 +365,11 @@ class Config:
                 tosave.write(configfile)
         except:
             print 'Error saving element ' + key + ' in config file ' + self.file_path + ', try rm -rf ' + self.file_path
-    
+
 
 if __name__ == '__main__':
     home = None
     if len(sys.argv) > 1: home = sys.argv[1]
-         
+
     Layout(XMLPATH, 'main', home)
     gtk.main()
