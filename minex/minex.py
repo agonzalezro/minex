@@ -29,7 +29,7 @@ class Layout:
         window = self.builder.get_object(window)
 
         home = self.initialize_mozilla(self.moz, config, home)
-        self['vbox1'].pack_start(self.moz)
+        self['vbox'].pack_start(self.moz)
 
         self.resize_window(window, config)
         self.moz.show()
@@ -134,7 +134,7 @@ class Layout:
 class Event:
     combo_length = 0
     first_time = True
-    loaded = False
+    no_size = False
 
     def __init__(self, parent):
         self.parent = parent
@@ -145,6 +145,18 @@ class Event:
         pass
 
     def on_title_changed(self, widget):
+        # I usually loads the web from progess, but if I can't determine if the web is loaded or no, I must do this
+        if self.no_size:
+            self.load_web_info(widget)
+            self.no_size = False
+
+    def on_progress_changed(self, widget, current, length):
+        if length == -1: self.no_size = True
+
+        if current == length:
+            self.load_web_info(widget)
+
+    def load_web_info(self, widget):
         if widget.get_title():
             self.parent['main'].set_title(widget.get_title() + ' - minino explorer')
         self.parent['back'].set_sensitive(widget.can_go_back())
@@ -165,23 +177,19 @@ class Event:
             # This could fail if the icon isn't retrieved at time
             pass
 
-    def on_progress_changed(self, widget, current, length):
-        # Unused for now
-        if current == length: self.loaded = True
-        else: self.loaded = False
-
-
     def on_back_clicked(self, widget):
         self.parent.moz.go_back()
+        self.load_web_info(widget)
 
     def on_forward_clicked(self, widget):
         self.parent.moz.go_forward()
+        self.load_web_info(widget)
 
     def on_home_clicked(self, widget):
-        self.loaded = False
         self.parent.moz.load_url(self.config['home'])
         self.parent.fill_combo(self.parent['url'], self.config['home'], False)
         self.parent['url'].set_active(0)
+        self.load_web_info(self.parent.moz)
 
     def on_refresh_clicked(self, widget):
         self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
@@ -201,7 +209,7 @@ class Event:
 
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
-        if key.keyval == 65293:
+        if key.keyval == 65293: # Return key
             # This is a fucking "bug", if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
             if self.first_time:
                 self.parent.moz.load_url(widget.get_active_text())
@@ -211,7 +219,16 @@ class Event:
             if len(widget.get_active_text()) >= 3:
                self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
                self.parent.fill_combo(widget, widget.get_active_text(), True)
-
+    
+    def on_url_key_press_event(self, widget, key):
+        if key.keyval == 65364: # Down key
+            widget.popup()
+            widget.stop_emission('key-press-event')
+        elif key.keyval == 65289: # Tab key
+            self.parent['search'].set_sensitive(True)
+            self.parent['search_container'].set_focus_child(self.parent['search'])
+            self.parent['main'].set_focus_child(self.parent['search_container'])
+            widget.stop_emission('key-press-event')
 
     def on_search_activate(self, widget):
         self.parent.moz.load_url(self.config['search_uri'] + widget.get_text())

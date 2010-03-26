@@ -7,11 +7,11 @@
     <property name="icon">minex.png</property>
     <signal name="destroy" handler="on_main_destroy"/>
     <child>
-      <widget class="GtkVBox" id="vbox1">
+      <widget class="GtkVBox" id="vbox">
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
         <child>
-          <widget class="GtkToolbar" id="toolbar1">
+          <widget class="GtkToolbar" id="toolbar">
             <property name="visible">True</property>
             <child>
               <widget class="GtkToolButton" id="back">
@@ -83,6 +83,7 @@
                   <widget class="GtkComboBoxEntry" id="url">
                     <property name="visible">True</property>
                     <signal name="changed" handler="on_url_changed"/>
+                    <signal name="key_press_event" handler="on_url_key_press_event"/>
                     <signal name="key_release_event" handler="on_url_key_release_event"/>
                   </widget>
                 </child>
