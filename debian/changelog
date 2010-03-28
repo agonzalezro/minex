@@ -1,0 +1,5 @@
+minex (0.2-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Alexandre González <alex@mirblu.com>  Sun, 28 Mar 2010 23:33:15 +0200

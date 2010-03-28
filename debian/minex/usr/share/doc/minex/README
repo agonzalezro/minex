@@ -1,0 +1,22 @@
+AUTHOR
+------
+Alexandre González <agonzalezro@gmail.com>
+
+
+INTRODUCTION
+------------
+A web explorer with a few features to use in the minino distribution.
+
+
+REQUERIMENTS
+------------
+python-gtkmozembed python-pysqlite2 python-lxml
+
+
+TODO
+----
+* When I tab in the combo, go to the search
+* Add tabs
+* Add config window
+* Add bookmarks
+* Add download support

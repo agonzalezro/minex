@@ -1,0 +1,13 @@
+Source: minex
+Section: Internet
+Priority: extra
+Maintainer: Alexandre González <alex@mirblu.com>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.1
+Homepage: http://alex.mirblu.com
+
+Package: minex
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-pysqlite2, python-gtkmozembed, python-lxml
+Description: The minino explorer
+ The minino explorer base in Gecko and written in python.

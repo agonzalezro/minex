@@ -18,7 +18,7 @@ import gtk.glade
 
 import gettext  
 APP="minex"  
-POPATH="po"
+POPATH="/usr/local/share/locale"
 gettext.textdomain(APP)  
 gettext.bindtextdomain(APP, POPATH)
 gtk.glade.textdomain(APP)  
@@ -27,8 +27,8 @@ gettext.install('py-gtkshots', 'po', True)
 _ = gettext.gettext
 
 
-XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.xml')
-ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.png')
+XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '/usr/share/minex/ui/minex.xml')
+ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '/usr/share/minex/ui/minex.png')
 TMPDIR = '/tmp/minex'
 
 class Layout:
