@@ -62,12 +62,12 @@ install: build
 	sed -i "s/'..\/bin\/minex.png'/'\/usr\/share\/minex\/ui\/minex.png'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
 	sed -i "s/POPATH=\"po\"/POPATH=\"\/usr\/local\/share\/locale\"/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
 
-	# Compile it!
-	python -mcompileall $(CURDIR)/debian/minex/usr/share/minex/python/
+	# Compile it! -> Doesn't needed?
+	# python -mcompileall $(CURDIR)/debian/minex/usr/share/minex/python/
 
 	# Create executable
 	echo "#!/bin/bash" > $(CURDIR)/debian/minex/usr/bin/minex
-	echo "python /usr/share/minex/python/minex.pyc" >> $(CURDIR)/debian/minex/usr/bin/minex
+	echo "python /usr/share/minex/python/minex.py" >> $(CURDIR)/debian/minex/usr/bin/minex
 	chmod a+x $(CURDIR)/debian/minex/usr/bin/minex
 
 	# Copy image/s
