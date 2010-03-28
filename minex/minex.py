@@ -14,6 +14,19 @@ import shutil
 import urllib2
 import lxml.html
 
+import gtk.glade
+
+import gettext  
+APP="minex"  
+DIR="po" #"/usr/local/share/locale"  
+gettext.textdomain(APP)  
+gettext.bindtextdomain(APP, DIR)
+gtk.glade.textdomain(APP)  
+gtk.glade.bindtextdomain(APP, DIR)
+gettext.install('py-gtkshots', 'po', True)
+_ = gettext.gettext
+
+
 XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.xml')
 ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.png')
 TMPDIR = '/tmp/minex'
@@ -158,7 +171,7 @@ class Event:
 
     def load_web_info(self, widget):
         if widget.get_title():
-            self.parent['main'].set_title(widget.get_title() + ' - minino explorer')
+            self.parent['main'].set_title(widget.get_title() + _(' - minino explorer'))
         self.parent['back'].set_sensitive(widget.can_go_back())
         self.parent['forward'].set_sensitive(widget.can_go_forward())
         if widget.get_link_message():
