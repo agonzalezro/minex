@@ -27,36 +27,46 @@ gettext.install('py-gtkshots', 'po', True)
 _ = gettext.gettext
 
 
-XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.xml')
-ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../bin/minex.png')
+XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../debian/minex/usr/share/minex/ui/minex.xml')
+ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/minex.png')
 TMPDIR = '/tmp/minex'
 
 class Layout:
     def __init__(self, file, window, home = None):
         config = Config()
-        self.moz = gtkmozembed.MozEmbed()
+        self.moz = dict()
+        self.moz[0] = gtkmozembed.MozEmbed()
         if not os.path.exists(TMPDIR): os.mkdir(TMPDIR)
 
         self.builder = gtk.Builder()
         self.builder.add_from_file(file)
         window = self.builder.get_object(window)
 
-        home = self.initialize_mozilla(self.moz, config, home)
-        self['vbox'].pack_start(self.moz)
+        home = self.initialize_mozilla(self.moz[0], config, home)
+        self['tabs'].append_page(self.moz[0])
 
         self.resize_window(window, config)
-        self.moz.show()
+        self.moz[0].show()
         window.show()
 
         # I must do this here, because if I initialize database after load_url, it doesn't work
         self.fill_combo(self['url'], home)
 
-        e = Event(self)
-        self.builder.connect_signals(e)
-        self.moz.connect('location', e.on_location_changed)
-        self.moz.connect('title', e.on_title_changed)
-        self.moz.connect('progress', e.on_progress_changed)
-        
+        self.e = Event(self)
+        self.builder.connect_signals(self.e)
+        self.moz[0].connect('location', self.e.on_location_changed)
+        self.moz[0].connect('title', self.e.on_title_changed)
+        self.moz[0].connect('progress', self.e.on_progress_changed)
+
+
+    def add_new_mozilla(self, page):
+        self.moz[page] = gtkmozembed.MozEmbed()
+        self.moz[page].show()
+        self.moz[page].connect('location', self.e.on_location_changed)
+        self.moz[page].connect('title', self.e.on_title_changed)
+        self.moz[page].connect('progress', self.e.on_progress_changed)
+        return self.moz[page]
+
     def initialize_mozilla(self, mozilla, config, home = None):
         if not home:
             try:
@@ -110,8 +120,8 @@ class Layout:
             'Connection': 'close',
         }
 
-        url = re.search('(http://)?.*(\.[a-z][a-z][a-z]?)', url).group(0) + '/'
-        if not url.startswith('http://'): url = 'http://' + url
+        url = re.search('(http(s)?://)?.*(\.[a-z][a-z][a-z]?)', url).group(0) + '/'
+        if (not url.startswith('http://')) and (not url.startswith('https://')): url = 'http://' + url
 
         # Create files for all favicon's in /tmp... for cache and for concurrence between the future tabs or several minex opened
         path = os.path.join(TMPDIR, url[0:-1].replace('http://', '').replace('.', '_') + '.ico')
@@ -138,10 +148,17 @@ class Layout:
                 except(urllib2.HTTPError, urllib2.URLError):
                     shutil.copyfile(alt_icon_path, path)
                     return
-
-        open(path, 'wb').write(icon)
+        try:
+            open(path, 'wb').write(icon)
+        except:
+            return
 
         return path
+
+    def delete_moz_and_reorder(self, page):
+        for i in range(page, len(self.moz)):
+            if (i+1 < len(self.moz)):
+                self.moz[i] = self.moz[i+1]
 
 
 class Event:
@@ -153,11 +170,36 @@ class Event:
         self.parent = parent
         self.database = DataBase()
         self.config = Config()
+        self.page  = int(parent['tabs'].get_current_page())
+
+    def on_tabs_switch_page(self, widget, page, page_num):
+        self.page = int(page_num)
+        self.load_web_info(self.parent.moz[self.page])
+
+    def on_button_press_event(self, widget, event):
+        self.page = widget.get_current_page()
+        if event.button == 3:
+            widget.emit_stop_by_name('button_press_event')
+            self.parent['tabs_menu'].popup(None, None, None, event.button, event.time)
+
+    def on_add_tab_clicked(self, widget):
+        new_page_num = self.parent['tabs'].get_n_pages()
+        moz = self.parent.add_new_mozilla(new_page_num)
+        self.parent['tabs'].append_page(moz)
+        self.parent['tabs'].set_current_page(new_page_num)
+        self.parent['main'].set_focus(self.parent['url'])
+    
+    def on_delete_tab_clicked(self, widget):
+        self.parent.delete_moz_and_reorder(self.page)
+        self.parent['tabs'].remove_page(self.page)
 
     def on_location_changed(self, widget):
         pass
 
     def on_title_changed(self, widget):
+        if widget.get_title():
+            self.parent['tabs'].set_tab_label_text(widget, widget.get_title())
+            self.parent['main'].set_title(widget.get_title() + _(' - minino explorer'))
         # I usually loads the web from progess, but if I can't determine if the web is loaded or no, I must do this
         if self.no_size:
             self.load_web_info(widget)
@@ -171,6 +213,7 @@ class Event:
 
     def load_web_info(self, widget):
         if widget.get_title():
+            self.parent['tabs'].set_tab_label_text(widget, widget.get_title())
             self.parent['main'].set_title(widget.get_title() + _(' - minino explorer'))
         self.parent['back'].set_sensitive(widget.can_go_back())
         self.parent['forward'].set_sensitive(widget.can_go_forward())
@@ -180,6 +223,7 @@ class Event:
             self.parent['url'].set_active(0)
             self.database.save_as_history_entry(widget.get_link_message())
         else:
+            if (widget.get_location()): self.parent.fill_combo(self.parent['url'], widget.get_location(), False)
             self.database.save_as_history_entry(self.parent['url'].get_active_text())
 
         icon_path = self.parent.get_favicon(self.parent['url'].get_active_text())
@@ -191,43 +235,49 @@ class Event:
             pass
 
     def on_back_clicked(self, widget):
-        self.parent.moz.go_back()
+        self.parent.moz[self.page].go_back()
         self.load_web_info(widget)
 
     def on_forward_clicked(self, widget):
-        self.parent.moz.go_forward()
+        self.parent.moz[self.page].go_forward()
         self.load_web_info(widget)
 
     def on_home_clicked(self, widget):
-        self.parent.moz.load_url(self.config['home'])
+        self.parent.moz[self.page].load_url(self.config['home'])
         self.parent.fill_combo(self.parent['url'], self.config['home'], False)
         self.parent['url'].set_active(0)
-        self.load_web_info(self.parent.moz)
+        self.load_web_info(self.parent.moz[self.page])
 
     def on_refresh_clicked(self, widget):
-        self.parent.moz.reload(gtkmozembed.FLAG_RELOADNORMAL)
+        self.parent.moz[self.page].reload(gtkmozembed.FLAG_RELOADNORMAL)
 
     def on_history_clicked(self, widget):
         database = DataBase()
         data = database.get_history()
-        self.parent.moz.render_data(data, long(len(data)), 'file:///', 'text/html')
+        self.parent.moz[self.page].render_data(data, long(len(data)), 'file:///', 'text/html')
 
     def on_url_changed(self, widget):
-        # We've made a click (or paste) because I can't write (or erase) two letter at same time
-        if abs(len(widget.get_active_text()) - self.combo_length) >= 2:
-            self.parent.moz.load_url(widget.get_active_text())
+        # BAD: We've made a click (or paste) because I can't write (or erase) two letter at same time
+        # I can erase more than a letter at time, but not paste it
+        if len(widget.get_active_text()) - self.combo_length >= 2:
+            self.parent.moz[self.page].load_url(widget.get_active_text())
             #self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
             self.parent.fill_combo(widget, widget.get_active_text(), True)
         self.combo_length = len(widget.get_active_text())
+
+    def on_main_key_release_event(self, widget, key):
+        # <Ctrl> + T
+        if key.keyval == 116:
+            self.on_add_tab_clicked(self.parent['tabs'])
 
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)
         if key.keyval == 65293: # Return key
             # This is a fucking "bug", if I'm on about:blank and try to load a webpage, I need to load it (or press enter) two times
             if self.first_time:
-                self.parent.moz.load_url(widget.get_active_text())
+                self.parent.moz[self.page].load_url(widget.get_active_text())
                 self.first_time = None
-            self.parent.moz.load_url(widget.get_active_text())
+            self.parent.moz[self.page].load_url(widget.get_active_text())
         else:
             if len(widget.get_active_text()) >= 3:
                self.parent.set_model_from_list(widget, self.database.get_only_five(widget.get_active_text(), widget.get_active_text()))
@@ -244,7 +294,7 @@ class Event:
             widget.stop_emission('key-press-event')
 
     def on_search_activate(self, widget):
-        self.parent.moz.load_url(self.config['search_uri'] + widget.get_text())
+        self.parent.moz[self.page].load_url(self.config['search_uri'] + widget.get_text())
 
     def on_main_destroy(self, widget):
         (_, _, self.config['width'], _) = self.parent['main'].get_allocation()

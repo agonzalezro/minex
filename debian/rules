@@ -58,8 +58,9 @@ install: build
 
 	# Change paths
 	cp $(CURDIR)/minex/minex.py $(CURDIR)/debian/minex/usr/share/minex/python/
-	sed -i "s/'..\/bin\/minex.xml'/'\/usr\/share\/minex\/ui\/minex.xml'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
-	sed -i "s/'..\/bin\/minex.png'/'\/usr\/share\/minex\/ui\/minex.png'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
+	#sed -i "s/'..\/bin\/minex.xml'/'\/usr\/share\/minex\/ui\/minex.xml'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
+	sed -i "s/'..\/debian\/minex\/usr\/share\/minex\/ui\/minex.xml'/'\/usr\/share\/minex\/ui\/minex.xml'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
+	sed -i "s/'data\/minex.png'/'\/usr\/share\/minex\/ui\/minex.png'/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
 	sed -i "s/POPATH=\"po\"/POPATH=\"\/usr\/local\/share\/locale\"/g" $(CURDIR)/debian/minex/usr/share/minex/python/minex.py
 
 	# Compile it! -> Doesn't needed?
