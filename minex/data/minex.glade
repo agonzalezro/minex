@@ -6,6 +6,7 @@
     <property name="title" translatable="yes">minino explorer</property>
     <property name="icon">minex.png</property>
     <signal name="destroy" handler="on_main_destroy"/>
+    <signal name="key_press_event" handler="on_main_key_press_event"/>
     <signal name="key_release_event" handler="on_main_key_release_event"/>
     <child>
       <widget class="GtkVBox" id="vbox">

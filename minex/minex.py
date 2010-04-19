@@ -165,6 +165,7 @@ class Event:
     combo_length = 0
     first_time = True
     no_size = False
+    control = False
 
     def __init__(self, parent):
         self.parent = parent
@@ -265,10 +266,15 @@ class Event:
             self.parent.fill_combo(widget, widget.get_active_text(), True)
         self.combo_length = len(widget.get_active_text())
 
+    def on_main_key_press_event(self, widget, key):
+        if key.keyval == 65507: self.control = True
+    
     def on_main_key_release_event(self, widget, key):
         # <Ctrl> + T
-        if key.keyval == 116:
+        if key.keyval == 116 and self.control:
             self.on_add_tab_clicked(self.parent['tabs'])
+
+        if key.keyval == 65507: self.control = False
 
     def on_url_key_release_event(self, widget, key):
         # This is the return key (I must compare this with a CONST from keymap and not whit a numeric value)

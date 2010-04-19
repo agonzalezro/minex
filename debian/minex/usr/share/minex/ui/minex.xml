@@ -32,6 +32,7 @@
     <property name="title" translatable="yes">minino explorer</property>
     <property name="icon">minex.png</property>
     <signal handler="on_main_destroy" name="destroy"/>
+    <signal handler="on_main_key_press_event" name="key_press_event"/>
     <signal handler="on_main_key_release_event" name="key_release_event"/>
     <child>
       <object class="GtkVBox" id="vbox">
