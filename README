@@ -15,8 +15,7 @@ python-gtkmozembed python-pysqlite2 python-lxml
 
 TODO
 ----
-* When I tab in the combo, go to the search
-* Add tabs
 * Add config window
 * Add bookmarks
 * Add download support
+* Add open-in-new-tab
