@@ -32,6 +32,8 @@ XMLPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../debian/mi
 ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/minex.png')
 TMPDIR = '/tmp/minex'
 
+DOWNLOAD_MANAGER = '/usr/bin/gwget'
+
 class Layout:
     program_path = None
 
@@ -167,9 +169,12 @@ class Layout:
         return path
 
     def delete_moz_and_reorder(self, page):
-        for i in range(page, len(self.moz)):
-            if (i+1 < len(self.moz)):
-                self.moz[i] = self.moz[i+1]
+        del self.moz[page]
+        if page != len(self.moz):
+            for i in range(page, len(self.moz)):
+                if (i+1 < len(self.moz)):
+                    self.moz[i] = self.moz[i+1]
+
 
 
 class Event:
@@ -192,12 +197,14 @@ class Event:
         if widget.get_link_message():
             self.last_link = widget.get_link_message()
             self.parent['moz_menu'].popup(None, None, None, 3, 0)
+        else:
+            pass
 
     # I can't stop the signal emmited to load a page when I click in a link, so I must do it at this way
     def net_start_event(self, widget):
         if widget.get_link_message() and not self.clicked:
             widget.stop_load()
-        else:
+        elif widget.get_link_message() == self.last_link:
             self.clicked = False
 
     def on_open_here_click(self, widget):
@@ -211,6 +218,10 @@ class Event:
 
     def on_open_in_window_click(self, widget):
         program = "%s %s \"%s\"" % ("python", self.parent.program_path, self.last_link)
+        subprocess.Popen(program, shell=True)
+
+    def on_download_click(self, widget):
+        program = "%s \"%s\"" % (DOWNLOAD_MANAGER, self.last_link)
         subprocess.Popen(program, shell=True)
 
     def on_tabs_switch_page(self, widget, page, page_num):
@@ -233,8 +244,16 @@ class Event:
         return new_page_num
     
     def on_delete_tab_clicked(self, widget):
-        self.parent.delete_moz_and_reorder(self.page)
-        self.parent['tabs'].remove_page(self.page)
+        erase_page = self.parent['tabs'].get_n_pages() - 1
+        
+        if erase_page == 0: gtk.main_quit()
+
+        # Not necessary since I only can delete last tab
+        #self.parent.delete_moz_and_reorder(erase_page)
+        self.parent.moz.popitem()
+        self.parent['tabs'].remove_page(-1)
+        self.page = erase_page
+
 
     def on_location_changed(self, widget):
         pass
@@ -253,11 +272,15 @@ class Event:
 
         if current == length:
             self.load_web_info(widget)
+            self.parent['tabs'].grab_focus()
+            self.parent['tabs'].child_focus(gtk.DIR_TAB_FORWARD)
 
     def load_web_info(self, widget):
         if widget.get_title():
-            self.parent['tabs'].set_tab_label_text(widget, widget.get_title())
-            self.parent['main'].set_title(widget.get_title() + _(' - minino explorer'))
+            if len(widget.get_title()) > 15: title = widget.get_title()[0:10] + "..."
+            else: title = widget.get_title()
+            self.parent['tabs'].set_tab_label_text(widget, title)
+            self.parent['main'].set_title(title + _(' - minino explorer'))
         self.parent['back'].set_sensitive(widget.can_go_back())
         self.parent['forward'].set_sensitive(widget.can_go_forward())
         if widget.get_link_message():

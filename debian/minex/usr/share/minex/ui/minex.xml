@@ -7,6 +7,7 @@
           <object class="GtkAction" id="add_tab">
             <property name="stock_id">gtk-add</property>
             <property name="name">add_tab</property>
+            <property name="label">Add tab</property>
             <signal handler="on_add_tab_clicked" name="activate"/>
           </object>
         </child>
@@ -14,6 +15,7 @@
           <object class="GtkAction" id="delete_tab">
             <property name="stock_id">gtk-delete</property>
             <property name="name">delete_tab</property>
+            <property name="label">Delete last</property>
             <signal handler="on_delete_tab_clicked" name="activate"/>
           </object>
         </child>
@@ -53,6 +55,14 @@
             <signal handler="on_open_in_window_click" name="activate"/>
           </object>
         </child>
+        <child>
+          <object class="GtkAction" id="download">
+            <property name="stock_id">gtk-floppy</property>
+            <property name="name">download</property>
+            <property name="label" translatable="yes">Download</property>
+            <signal handler="on_download_click" name="activate"/>
+          </object>
+        </child>
       </object>
     </child>
     <ui>
@@ -60,6 +70,8 @@
         <menuitem action="open_here"/>
         <menuitem action="open_in_tab"/>
         <menuitem action="open_in_window"/>
+        <separator/>
+        <menuitem action="download"/>
       </popup>
     </ui>
   </object>

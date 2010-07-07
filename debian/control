@@ -8,6 +8,6 @@ Homepage: http://alex.mirblu.com
 
 Package: minex
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-pysqlite2, python-gtkmozembed, python-lxml
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-pysqlite2, python-gtkmozembed, python-lxml, gwget
 Description: The minino explorer
  The minino explorer base in Gecko and written in python.
