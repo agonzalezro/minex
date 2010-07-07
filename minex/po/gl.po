@@ -7,23 +7,40 @@ msgid ""
 msgstr ""
 "Project-Id-Version: agonzalezro-minex 8331d38\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-03-28 13:25+0200\n"
-"PO-Revision-Date: 2010-03-28 13:27+0100\n"
+"POT-Creation-Date: 2010-07-07 16:12+0200\n"
+"PO-Revision-Date: 2010-07-07 16:14+0100\n"
 "Last-Translator: Miguel Anxo Bouzada <mbouzada@gmail.com>\n"
 "Language-Team: Galician\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: minex.py:172
+#: minex.py:264
+#: minex.py:283
 msgid " - minino explorer"
 msgstr " - Navegador MiniNo"
 
 #: data/minex.glade.h:1
+msgid "Download"
+msgstr "Descargar"
+
+#: data/minex.glade.h:2
+msgid "Open here"
+msgstr "Abrir aquí"
+
+#: data/minex.glade.h:3
+msgid "Open in new tab"
+msgstr "Abrir nunha nova lapela"
+
+#: data/minex.glade.h:4
+msgid "Open in new window"
+msgstr "Abrir nunha nova xanela"
+
+#: data/minex.glade.h:5
 msgid "Search in web..."
 msgstr "Buscar no web"
 
-#: data/minex.glade.h:2
+#: data/minex.glade.h:6
 msgid "minino explorer"
 msgstr "Navegador MiniNo"
 
