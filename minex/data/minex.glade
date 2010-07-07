@@ -11,7 +11,6 @@
     <child>
       <widget class="GtkVBox" id="vbox">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <child>
           <widget class="GtkToolbar" id="toolbar">
             <property name="visible">True</property>
@@ -152,6 +151,51 @@
         <property name="use_underline">True</property>
         <property name="use_stock">True</property>
         <signal name="activate" handler="on_delete_tab_clicked"/>
+      </widget>
+    </child>
+  </widget>
+  <widget class="GtkMenu" id="moz_menu">
+    <property name="visible">True</property>
+    <child>
+      <widget class="GtkImageMenuItem" id="open_here">
+        <property name="label" translatable="yes">Open here</property>
+        <property name="visible">True</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_open_here_click"/>
+        <child internal-child="image">
+          <widget class="GtkImage" id="image1">
+            <property name="visible">True</property>
+            <property name="stock">gtk-media-play</property>
+          </widget>
+        </child>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkImageMenuItem" id="open_in_tab">
+        <property name="label" translatable="yes">Open in new tab</property>
+        <property name="visible">True</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_open_in_tab_click"/>
+        <child internal-child="image">
+          <widget class="GtkImage" id="image2">
+            <property name="visible">True</property>
+            <property name="stock">gtk-add</property>
+          </widget>
+        </child>
+      </widget>
+    </child>
+    <child>
+      <widget class="GtkImageMenuItem" id="open_in_window">
+        <property name="label" translatable="yes">Open in new window</property>
+        <property name="visible">True</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_open_in_window_click"/>
+        <child internal-child="image">
+          <widget class="GtkImage" id="image3">
+            <property name="visible">True</property>
+            <property name="stock">gtk-new</property>
+          </widget>
+        </child>
       </widget>
     </child>
   </widget>

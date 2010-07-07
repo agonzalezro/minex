@@ -26,6 +26,43 @@
       </popup>
     </ui>
   </object>
+  <object class="GtkUIManager" id="uimanager2">
+    <child>
+      <object class="GtkActionGroup" id="actiongroup2">
+        <child>
+          <object class="GtkAction" id="open_here">
+            <property name="stock_id">gtk-media-play</property>
+            <property name="name">open_here</property>
+            <property name="label" translatable="yes">Open here</property>
+            <signal handler="on_open_here_click" name="activate"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkAction" id="open_in_tab">
+            <property name="stock_id">gtk-add</property>
+            <property name="name">open_in_tab</property>
+            <property name="label" translatable="yes">Open in new tab</property>
+            <signal handler="on_open_in_tab_click" name="activate"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkAction" id="open_in_window">
+            <property name="stock_id">gtk-new</property>
+            <property name="name">open_in_window</property>
+            <property name="label" translatable="yes">Open in new window</property>
+            <signal handler="on_open_in_window_click" name="activate"/>
+          </object>
+        </child>
+      </object>
+    </child>
+    <ui>
+      <popup name="moz_menu">
+        <menuitem action="open_here"/>
+        <menuitem action="open_in_tab"/>
+        <menuitem action="open_in_window"/>
+      </popup>
+    </ui>
+  </object>
   <!-- interface-requires gtk+ 2.16 -->
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="main">
@@ -37,7 +74,6 @@
     <child>
       <object class="GtkVBox" id="vbox">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <child>
           <object class="GtkToolbar" id="toolbar">
             <property name="visible">True</property>
@@ -161,6 +197,9 @@
     </child>
   </object>
   <object class="GtkMenu" constructor="uimanager1" id="tabs_menu">
+    <property name="visible">True</property>
+  </object>
+  <object class="GtkMenu" constructor="uimanager2" id="moz_menu">
     <property name="visible">True</property>
   </object>
 </interface>

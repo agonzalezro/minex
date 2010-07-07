@@ -15,8 +15,9 @@ import urllib2
 import lxml.html
 
 import gtk.glade
+import subprocess
 
-import gettext  
+import gettext
 APP="minex"  
 POPATH="po"
 gettext.textdomain(APP)  
@@ -32,7 +33,11 @@ ICONPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/minex.
 TMPDIR = '/tmp/minex'
 
 class Layout:
-    def __init__(self, file, window, home = None):
+    program_path = None
+
+    def __init__(self, file, window, program_path, home = None):
+        self.program_path = program_path
+
         config = Config()
         self.moz = dict()
         self.moz[0] = gtkmozembed.MozEmbed()
@@ -58,6 +63,8 @@ class Layout:
         self.moz[0].connect('title', self.e.on_title_changed)
         self.moz[0].connect('progress', self.e.on_progress_changed)
 
+        self.moz[0].connect('dom_mouse_click', self.e.button_press_over_link)
+        self.moz[0].connect('net_start', self.e.net_start_event)
 
     def add_new_mozilla(self, page):
         self.moz[page] = gtkmozembed.MozEmbed()
@@ -65,6 +72,10 @@ class Layout:
         self.moz[page].connect('location', self.e.on_location_changed)
         self.moz[page].connect('title', self.e.on_title_changed)
         self.moz[page].connect('progress', self.e.on_progress_changed)
+
+        self.moz[page].connect('dom_mouse_click', self.e.button_press_over_link)
+        self.moz[page].connect('net_start', self.e.net_start_event)
+
         return self.moz[page]
 
     def initialize_mozilla(self, mozilla, config, home = None):
@@ -166,12 +177,41 @@ class Event:
     first_time = True
     no_size = False
     control = False
+    last_link = None
+    page = 0
+    clicked = False
 
     def __init__(self, parent):
         self.parent = parent
         self.database = DataBase()
         self.config = Config()
         self.page  = int(parent['tabs'].get_current_page())
+
+    def button_press_over_link(self, widget, event):
+        # FIXME: do this only in right-click, but I don't know how to cast gpointer to gtk.gdk.Event to get the event.button
+        if widget.get_link_message():
+            self.last_link = widget.get_link_message()
+            self.parent['moz_menu'].popup(None, None, None, 3, 0)
+
+    # I can't stop the signal emmited to load a page when I click in a link, so I must do it at this way
+    def net_start_event(self, widget):
+        if widget.get_link_message() and not self.clicked:
+            widget.stop_load()
+        else:
+            self.clicked = False
+
+    def on_open_here_click(self, widget):
+        self.clicked = True
+        self.parent.moz[self.page].load_url(self.last_link)
+
+    def on_open_in_tab_click(self, widget):
+        page = self.on_add_tab_clicked(widget)
+        self.clicked = True
+        self.parent.moz[page].load_url(self.last_link)
+
+    def on_open_in_window_click(self, widget):
+        program = "%s %s \"%s\"" % ("python", self.parent.program_path, self.last_link)
+        subprocess.Popen(program, shell=True)
 
     def on_tabs_switch_page(self, widget, page, page_num):
         self.page = int(page_num)
@@ -189,6 +229,8 @@ class Event:
         self.parent['tabs'].append_page(moz)
         self.parent['tabs'].set_current_page(new_page_num)
         self.parent['main'].set_focus(self.parent['url'])
+
+        return new_page_num
     
     def on_delete_tab_clicked(self, widget):
         self.parent.delete_moz_and_reorder(self.page)
@@ -306,9 +348,12 @@ class Event:
         (_, _, self.config['width'], _) = self.parent['main'].get_allocation()
         (_, _, _, self.config['height']) = self.parent['main'].get_allocation()
         # Remove temp files
-        for file in os.listdir(TMPDIR):
-            os.remove(os.path.join(TMPDIR, file))
-        os.rmdir(TMPDIR)
+        try:
+            for file in os.listdir(TMPDIR):
+                os.remove(os.path.join(TMPDIR, file))
+            os.rmdir(TMPDIR)
+        except:
+            pass
         gtk.main_quit()
 
 
@@ -463,5 +508,5 @@ if __name__ == '__main__':
     home = None
     if len(sys.argv) > 1: home = sys.argv[1]
 
-    Layout(XMLPATH, 'main', home)
+    Layout(XMLPATH, window='main', program_path=os.path.abspath(sys.argv[0]), home=home)
     gtk.main()
