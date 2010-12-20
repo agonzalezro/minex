@@ -1,7 +1,5 @@
-AUTHOR
-------
-Alexandre González <agonzalezro@gmail.com>
-
+minex
+=====
 
 INTRODUCTION
 ------------
