@@ -1,14 +1,13 @@
 minex
 =====
 
-INTRODUCTION
-------------
 A web explorer with a few features to use in the minino distribution.
 
 
-REQUERIMENTS
+requeriments
 ------------
-python-gtkmozembed python-pysqlite2 python-lxml
+
+    python-gtkmozembed python-pysqlite2 python-lxml
 
 
 TODO
